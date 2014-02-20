@@ -60,6 +60,7 @@ module.exports = function(obj, string, options ) {
 
       forEach: function(cb) {
          traverse(obj).forEach(function(node) {
+            if( options && options.use_in && typeof(node)==='object' ){ var ks= this.keys = []; for(var k in node ) ks.push(k); }
             if (matchesAny(sels, this, options)) {
                this.matches = function(string) {
                   return matchesAny(parseSelectors(string), this, options);
@@ -129,7 +130,7 @@ function matchesKey(part, context, options) {
        node = context.node,
        parent = context.parent;
 
-   if (part.id && !(key == part.id || ( options && options.caseInsensitive && key && part.id && key.toLowerCase() === part.id.toLowerCase() ) ) ) {
+   if (part.id && !(key == part.id || ( options && options.case_insensitive && key && part.id && key.toLowerCase() === part.id.toLowerCase() ) ) ) {
       return false;
    }
    if (part.type) {
