@@ -1,7 +1,8 @@
 var traverse = require("traverse"),
     JSONSelect = require("JSONSelect");
 
-module.exports = function(obj, string) {
+module.exports = function(obj, string, options ) {
+
    var sels = parseSelectors(string);
 
    return {
@@ -59,9 +60,10 @@ module.exports = function(obj, string) {
 
       forEach: function(cb) {
          traverse(obj).forEach(function(node) {
-            if (matchesAny(sels, this)) {
+            if( options && options.use_in && typeof(node)==='object' ){ var ks= this.keys = []; for(var k in node ) ks.push(k); }
+            if (matchesAny(sels, this, options)) {
                this.matches = function(string) {
-                  return matchesAny(parseSelectors(string), this);
+                  return matchesAny(parseSelectors(string), this, options);
                };
                // inherit context from js-traverse
                cb.call(this, node);
@@ -84,16 +86,16 @@ function getSelectors(parsed) {
    return [parsed];
 }
 
-function matchesAny(sels, context) {
+function matchesAny(sels, context, options) {
    for (var i = 0; i < sels.length; i++) {
-      if (matches(sels[i], context)) {
+      if (matches(sels[i], context, options)) {
          return true;
       }
    }
    return false;
 }
 
-function matches(sel, context) {
+function matches(sel, context, options) {
    var path = context.parents.concat([context]),
        i = path.length - 1,
        j = sel.length - 1;
@@ -110,7 +112,7 @@ function matches(sel, context) {
          continue;
       }
 
-      if (matchesKey(part, context)) {
+      if (matchesKey(part, context, options)) {
          j--;
       }
       else if (must) {
@@ -123,12 +125,12 @@ function matches(sel, context) {
    return j == -1;
 }
 
-function matchesKey(part, context) {
+function matchesKey(part, context, options) {
    var key = context.key,
        node = context.node,
        parent = context.parent;
 
-   if (part.id && key != part.id) {
+   if (part.id && !(key == part.id || ( options && options.case_insensitive && key && part.id && key.toLowerCase() === part.id.toLowerCase() ) ) ) {
       return false;
    }
    if (part.type) {
@@ -173,7 +175,7 @@ function matchesKey(part, context) {
       var sels = getSelectors(part.has[0]),
           match = false;
       traverse(node).forEach(function(child) {
-         if (matchesAny(sels, this)) {
+         if (matchesAny(sels, this, options)) {
             match = true;
          }
       });

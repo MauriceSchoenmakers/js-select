@@ -148,6 +148,25 @@ select(people2).forEach(function(node) {
 });
 assert.deepEqual(select(people2, ".age").nodes(), [45, 25])
 
+assert.deepEqual(select(people2, ".Age").nodes(), []);
+// options case_insensitive
+// use case_insensitive:true to select keys without regarding case
+assert.deepEqual(select(people2, ".Age",{case_insensitive:true}).nodes(), [45, 25]);
+
+
+// option use_in
+var A=function(){ this.x=1; }
+var B=function(){ this.y=2; }
+var a = new A();
+B.prototype=a;
+var b = new B();
+
+assert.deepEqual(select(b, ".y").nodes(), [2]);
+assert.deepEqual(select(b, ".x").nodes(), []);
+// use in operator to access the key x of the prototype a of the object b
+assert.deepEqual(select(b, ".x",{use_in:true}).nodes(), [1]);
+
+
 
 // bigger stuff
 var timeline = require("./timeline.js");
@@ -171,3 +190,5 @@ assert.equal(sel.match(":nth-child(n-2)", timeline).length, 335);
 assert.equal(sel.match("object", timeline).length, 927);
 assert.equal(sel.match("*", timeline).length, 3281);
 console.timeEnd("JSONSelect time")
+
+
