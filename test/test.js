@@ -78,6 +78,18 @@ assert.deepEqual(select(people, ':val("Twi")').nodes(), [])
 assert.deepEqual(select(people, ':contains("Twi")').nodes(), ["Twilight"])
 assert.deepEqual(select(people, ':contains("weif")').nodes(), [])
 
+assert.deepEqual(select(people, ".male:expr(x = true)").nodes(),[true]);
+assert.deepEqual(select(people, ".male:expr(x = false)").nodes(),[]);
+assert.deepEqual(select(people, ".male:expr(x!= true)").nodes(),[]);
+assert.deepEqual(select(people, ".male:expr(x!= false)").nodes(),[true]);
+
+assert.deepEqual(select(people, ".age:expr( x = 35  )").nodes(),[35]);
+assert.deepEqual(select(people, ".age:expr( x > 15 && x < 36 )").nodes(),[35]);
+assert.deepEqual(select(people, ".age:expr( x = 36 )").nodes(),[]);
+assert.deepEqual(select(people, ".age:expr( x != 35  )").nodes(),[15]);
+assert.deepEqual(select(people, ".age:expr( x != 36 )").nodes(),[35,15]);
+
+
 // invalid
 assert.deepEqual(select(people, ".hmmm").nodes(), []);
 assert.throws(function() {

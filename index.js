@@ -183,23 +183,43 @@ function matchesKey(part, context) {
    }
    if (part.expr) {
       var expr = part.expr, lhs = expr[0], op = expr[1], rhs = expr[2];
-
-      if (typeof node == "boolean") {
-          if(( op == "=" && node == rhs )  ||
-             ( op == "!=" && node != rhs)) {
-              return true;
-          }
-          return false;
-      }
-
-      if (typeof node != "string"
-          || (!lhs && op == "=" && node != rhs)   // :val("str")
-          || (!lhs && op == "*=" && node.indexOf(rhs) == -1)) { // :contains("substr")
-         return false;
-      }
+	  return exprEval(expr,node);
    }
    return true;
 }
+
+// copied from JSONSelect
+// TODO remove if JSONSelect exports it
+function is(o, t) { return typeof o === t; }
+var operators = {
+        '*':  [ 9, function(lhs, rhs) { return lhs * rhs; } ],
+        '/':  [ 9, function(lhs, rhs) { return lhs / rhs; } ],
+        '%':  [ 9, function(lhs, rhs) { return lhs % rhs; } ],
+        '+':  [ 7, function(lhs, rhs) { return lhs + rhs; } ],
+        '-':  [ 7, function(lhs, rhs) { return lhs - rhs; } ],
+        '<=': [ 5, function(lhs, rhs) { return is(lhs, 'number') && is(rhs, 'number') && lhs <= rhs; } ],
+        '>=': [ 5, function(lhs, rhs) { return is(lhs, 'number') && is(rhs, 'number') && lhs >= rhs; } ],
+        '$=': [ 5, function(lhs, rhs) { return is(lhs, 'string') && is(rhs, 'string') && lhs.lastIndexOf(rhs) === lhs.length - rhs.length; } ],
+        '^=': [ 5, function(lhs, rhs) { return is(lhs, 'string') && is(rhs, 'string') && lhs.indexOf(rhs) === 0; } ],
+        '*=': [ 5, function(lhs, rhs) { return is(lhs, 'string') && is(rhs, 'string') && lhs.indexOf(rhs) !== -1; } ],
+        '>':  [ 5, function(lhs, rhs) { return is(lhs, 'number') && is(rhs, 'number') && lhs > rhs; } ],
+        '<':  [ 5, function(lhs, rhs) { return is(lhs, 'number') && is(rhs, 'number') && lhs < rhs; } ],
+        '=':  [ 3, function(lhs, rhs) { return lhs === rhs; } ],
+        '!=': [ 3, function(lhs, rhs) { return lhs !== rhs; } ],
+        '&&': [ 2, function(lhs, rhs) { return lhs && rhs; } ],
+        '||': [ 1, function(lhs, rhs) { return lhs || rhs; } ]
+};
+
+function exprEval(expr, x) {
+        if (expr === undefined) return x;
+        else if (expr === null || typeof expr !== 'object') {
+            return expr;
+        }
+        var lhs = exprEval(expr[0], x),
+            rhs = exprEval(expr[2], x);
+        return operators[expr[1]][1](lhs, rhs);
+}
+
 
 var isArray = Array.isArray || function(obj) {
     return toString.call(obj) === '[object Array]';
